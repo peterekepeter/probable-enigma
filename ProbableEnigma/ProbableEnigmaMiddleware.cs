@@ -76,6 +76,17 @@ namespace ProbableEnigma
                     store.Put(key, item);
                     context.Response.StatusCode = storeItem != null ? StatusCodes.Status202Accepted : StatusCodes.Status201Created;
                     break;
+                case "DELETE":
+                    if (storeItem == null)
+                    {
+                        context.Response.StatusCode = StatusCodes.Status204NoContent;
+                    }
+                    else
+                    {
+                        store.Put(key, null);
+                        context.Response.StatusCode = StatusCodes.Status202Accepted;
+                    }
+                    break;
             }
         }
 
