@@ -1,6 +1,6 @@
 ﻿namespace ProbableEnigma
 {
-    internal interface IStore
+    public interface IStore
     {
         /// <summary>
         /// Find and returns existing item.

@@ -11,14 +11,16 @@ namespace ProbableEnigma
     public class ProbableEnigmaMiddleware
     {
         private readonly RequestDelegate _next;
+        private ICacheService _service;
+
+        public ProbableEnigmaMiddleware(RequestDelegate next, ICacheService service)
+        {
+            _next = next;
+            _service = service;
+        }
 
         private string defaultStore = "default";
         private string defaultKey = "default";
-
-        public ProbableEnigmaMiddleware(RequestDelegate next)
-        {
-            _next = next;
-        }
 
         public static (string, string) ParsePath(string path, string defaultStore, string defaultKey)
         {
@@ -42,7 +44,7 @@ namespace ProbableEnigma
             (string storeKey, string key) = ParsePath(context.Request.Path.Value, defaultStore, defaultKey);
             var method = context.Request.Method;
 
-            var store = FindStore(storeKey);
+            var store = _service.FindStore(storeKey);
 
             CacheItem storeItem = store.Get(key);
             CacheItem item = null;
@@ -60,6 +62,7 @@ namespace ProbableEnigma
                     store.Put(key, item);
                     context.Response.StatusCode = StatusCodes.Status201Created;
                     break;
+
                 case "GET":
                     if (storeItem == null)
                     {
@@ -71,11 +74,13 @@ namespace ProbableEnigma
                     context.Response.ContentLength = storeItem.Body.Length;
                     await context.Response.Body.WriteAsync(storeItem.Body, 0, storeItem.Body.Length);
                     break;
+
                 case "PUT":
                     item = await FromContext(context);
                     store.Put(key, item);
                     context.Response.StatusCode = storeItem != null ? StatusCodes.Status202Accepted : StatusCodes.Status201Created;
                     break;
+
                 case "DELETE":
                     if (storeItem == null)
                     {
@@ -88,9 +93,10 @@ namespace ProbableEnigma
                     }
                     break;
             }
+
         }
 
-        public static async Task<byte[]> ReadFully(Stream input)
+        private static async Task<byte[]> ReadFully(Stream input)
         {
             byte[] buffer = new byte[16 * 1024];
             using (MemoryStream ms = new MemoryStream())
@@ -112,9 +118,5 @@ namespace ProbableEnigma
                 Body = await ReadFully(context.Request.Body)
             };
         }
-
-        private readonly ConcurrentDictionary<string, IStore> stores = new ConcurrentDictionary<string, IStore>();
-        
-        private IStore FindStore(string key) => stores.GetOrAdd(key, factory => new Store());
     }
 }
