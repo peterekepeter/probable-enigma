@@ -31,7 +31,13 @@ The following operation are supported:
 Any content type works! The data is stored in memory along with content type.
 This means you can cache anything from text to images.
 
+## Example
+
 Here is an example of a Javascript frontend using the cache:
 
 	await fetch('strings/greet', { method:'PUT', body:'hello' });
 	await fetch('strings/greet').then(async data => console.log(await data.text()));
+
+## Fun Stuff!
+
+The project name is the first name that github generated.
